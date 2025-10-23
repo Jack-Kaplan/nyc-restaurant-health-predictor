@@ -14,7 +14,7 @@ The project will also **visualize key patterns and trends** in health code viola
 ## Key Features
 - **Feature 1:** Predict health inspection scores.  
 - **Feature 2:** Generate visualizations of inspection scores by **location, cuisine type, and other variables**.  
-- **Feature 3 (Optional):** Integrate **Google Maps API** to map restaurant locations and display their inspection grades.
+- **Feature 3 (Optional):** Integrate **Google Maps API** to map restaurant locations and display their inspection grades.Open Street
 
 ---
 
