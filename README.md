@@ -88,7 +88,7 @@ This project is designed for:
 
 | Dataset Name | Link | Description |
 |---------------|------|--------------|
-| **Restaurant Grades** | [Restaurant Dataset](https://data.cityofnewyork.us/Health/Restaurant-Grades/gra9-xbjk/about_data) | Contains restaurant inspections, violations, grades, and adjudication details. |
+| **Restaurant Grades** | [Restaurant Dataset](https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j/about_data) | Contains restaurant inspections, violations, grades, and adjudication details. |
 
 ---
 
