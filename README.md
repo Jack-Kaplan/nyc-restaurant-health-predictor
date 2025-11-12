@@ -70,15 +70,15 @@ This project is designed for:
 | Phase | Start Date | End Date | Deliverables |
 |--------|-------------|-----------|---------------|
 | **Planning** | Oct 16 | Oct  | N/A |
-| **Development** | Oct  | Nov  | N/A |
-| **Testing** | Nov  | Nov  | N/A |
-| **Final Delivery** | Dec  | Dec  | N/A |
+| **Development** | Oct 31  | Nov 20 | N/A |
+| **Testing** | Nov 21  | Dec 1  | N/A |
+| **Final Delivery** | Dec 2  | Dec 9 | N/A |
 
 ---
 
 ## Implementation Plan
 1. **Planning:** Define project scope, gather dataset, assign roles.  
-2. **Development:** Build and train predictive model, create API endpoints, develop dashboard.  
+2. **Development:** Build and train predictive model, create API endpoints, develop dashboard & incorporate AI.  
 3. **Testing:** Evaluate model accuracy, fix frontend/backend bugs, perform user testing.  
 4. **Deployment:** Host on web server (e.g., Render, Vercel, or AWS) and publish GitHub repository.
 
@@ -100,4 +100,5 @@ This project is designed for:
 | Integrating Google Maps API with React | [YouTube Link](#) | For feature visualization |
 | Flask API for Machine Learning Models | [YouTube Link](#) | For backend deployment |
 |Leaflet JS Library|[Leaflet Docs](https://leafletjs.com/examples/quick-start/)|For Maps Integration|
+|Leaflet JS Library|[Hugging Face AI]([https://leafletjs.com/examples/quick-start/](https://www.youtube.com/watch?v=QEaBAZQCtwE))|Intro into AI Hugging Face|
 
