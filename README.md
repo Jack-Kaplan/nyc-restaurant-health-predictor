@@ -99,4 +99,5 @@ This project is designed for:
 | How to Build a Prediction Model in Python | [YouTube Link](#) | Intro to scikit-learn |
 | Integrating Google Maps API with React | [YouTube Link](#) | For feature visualization |
 | Flask API for Machine Learning Models | [YouTube Link](#) | For backend deployment |
+|Leaflet JS Library|[Leaflet Docs](#https://leafletjs.com/examples/quick-start/)|For Maps Integration|
 
