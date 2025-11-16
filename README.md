@@ -89,6 +89,7 @@ This project is designed for:
 | Dataset Name | Link | Description |
 |---------------|------|--------------|
 | **Restaurant Grades** | [Restaurant Dataset](https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j/about_data) | Contains restaurant inspections, violations, grades, and adjudication details. |
+| **SocioEconomic Parameters** | [SocioEconomic Dataset](https://data.census.gov/table/ACSST5Y2023.S1501?q=ACS+Table+S1501&g=040XX00US36$8600000) | Contains poverty, education, income details. |
 
 ---
 
