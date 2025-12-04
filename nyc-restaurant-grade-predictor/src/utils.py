@@ -12,9 +12,24 @@ GRADE_COLORS = {
     "Z": "#95A5A6"    # gray (Grade Pending / Not Yet Graded)
 }
 
+GRADE_COLORS_RGB = {
+    "A": [46, 204, 113, 200],    # green with alpha
+    "B": [241, 196, 15, 200],    # yellow
+    "C": [230, 126, 34, 200],    # orange
+    "P": [52, 152, 219, 200],    # blue (Pending)
+    "Z": [149, 165, 166, 200],   # gray
+}
+
 def get_grade_color(grade: str):
     """Return the hex color associated with a grade letter."""
     return GRADE_COLORS.get(grade, "#95A5A6")
+
+
+def get_grade_color_rgb(grade: str):
+    """Return RGBA list for PyDeck visualization."""
+    if pd.isna(grade):
+        return [149, 165, 166, 200]
+    return GRADE_COLORS_RGB.get(str(grade).upper(), [149, 165, 166, 200])
 
 
 # -------------------------------------------------
@@ -117,4 +132,22 @@ def restaurant_popup_html(row):
     </div>
     """
     return html
+
+
+# -------------------------------------------------
+# 6. PyDeck map data preparation
+# -------------------------------------------------
+
+def prepare_map_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Prepare dataframe for PyDeck visualization with color column."""
+    map_df = df[['latitude', 'longitude', 'dba', 'grade',
+                 'cuisine_description', 'borough', 'zipcode', 'score']].copy()
+
+    map_df['color'] = map_df['grade'].apply(get_grade_color_rgb)
+    map_df['name'] = map_df['dba'].fillna('Unknown Restaurant')
+    map_df['grade_display'] = map_df['grade'].fillna('N/A')
+    map_df['score_display'] = map_df['score'].fillna('N/A').astype(str)
+    map_df = map_df.dropna(subset=['latitude', 'longitude'])
+
+    return map_df
 

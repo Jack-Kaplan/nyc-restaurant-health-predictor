@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-import folium
-
-from streamlit_folium import st_folium
+import pydeck as pdk
 
 from src.data_loader import get_data
 from src.predictor import predict_restaurant_grade
@@ -10,9 +8,9 @@ from src.utils import (
     get_grade_color,
     format_probabilities,
     row_to_model_input,
-    restaurant_popup_html,
     normalize_text,
     display_value,
+    prepare_map_dataframe,
 )
 
 
@@ -106,42 +104,66 @@ st.sidebar.markdown(f"**Results: {len(df_filtered)} restaurants**")
 left_col, right_col = st.columns([2, 1])
 
 with left_col:
-    st.subheader(" Map of Restaurants")
+    st.subheader("Map of Restaurants")
 
     if len(df_filtered) == 0:
         st.info("No restaurants match your filters. Try changing the filters.")
     else:
-        # Center map at mean location
-        center_lat = df_filtered["latitude"].mean()
-        center_lon = df_filtered["longitude"].mean()
+        # Prepare data for PyDeck (no marker limit needed)
+        map_df = prepare_map_dataframe(df_filtered)
 
-        m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
+        center_lat = map_df["latitude"].mean()
+        center_lon = map_df["longitude"].mean()
 
-        # Limit markers to prevent browser freeze (show first 1000)
-        MAX_MARKERS = 1000
-        df_for_map = df_filtered.head(MAX_MARKERS)
+        # Adaptive zoom based on data spread
+        lat_range = map_df["latitude"].max() - map_df["latitude"].min()
+        lon_range = map_df["longitude"].max() - map_df["longitude"].min()
+        max_range = max(lat_range, lon_range)
+        zoom = 15 if max_range < 0.01 else 13 if max_range < 0.05 else 12 if max_range < 0.1 else 11
 
-        if len(df_filtered) > MAX_MARKERS:
-            st.caption(f"Showing {MAX_MARKERS:,} of {len(df_filtered):,} restaurants on map. Use filters to narrow results.")
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=map_df,
+            get_position=["longitude", "latitude"],
+            get_color="color",
+            get_radius=8,
+            radius_min_pixels=4,
+            radius_max_pixels=8,
+            radius_scale=1,
+            pickable=True,
+            auto_highlight=True,
+        )
 
-        # Add markers
-        for _, row in df_for_map.iterrows():
-            lat = row["latitude"]
-            lon = row["longitude"]
-            grade = row.get("grade", "N/A")
-            color = get_grade_color(grade)
+        view_state = pdk.ViewState(
+            latitude=center_lat,
+            longitude=center_lon,
+            zoom=zoom,
+            pitch=0,
+        )
 
-            popup_html = restaurant_popup_html(row)
-            folium.CircleMarker(
-                location=[lat, lon],
-                radius=4,
-                popup=folium.Popup(popup_html, max_width=250),
-                color=color,
-                fill=True,
-                fill_opacity=0.8
-            ).add_to(m)
+        tooltip = {
+            "html": "<b>{name}</b><br/>Cuisine: {cuisine_description}<br/>Borough: {borough}<br/>ZIP: {zipcode}<br/>Score: {score_display}<br/>Grade: <b>{grade_display}</b>",
+            "style": {"backgroundColor": "steelblue", "color": "white", "fontSize": "14px", "padding": "10px"}
+        }
 
-        st_data = st_folium(m, width="100%", height=500)
+        st.pydeck_chart(
+            pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip=tooltip),
+            height=500,
+            use_container_width=True,
+        )
+
+        # Grade legend
+        st.markdown("""
+        <div style="display: flex; gap: 15px; font-size: 12px; margin-top: 5px;">
+            <span><span style="color: #2ECC71;">●</span> A</span>
+            <span><span style="color: #F1C40F;">●</span> B</span>
+            <span><span style="color: #E67E22;">●</span> C</span>
+            <span><span style="color: #3498DB;">●</span> Pending</span>
+            <span><span style="color: #95A5A6;">●</span> N/A</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.caption(f"Showing all {len(map_df):,} restaurants on map.")
 
     st.subheader("Restaurant List")
     st.caption("Filtered view based on your selections in the sidebar.")
