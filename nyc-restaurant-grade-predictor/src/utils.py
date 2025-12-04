@@ -38,10 +38,10 @@ def format_probabilities(prob_dict: dict):
 
 def row_to_model_input(row: pd.Series):
     """
-    Take a row from the merged restaurant dataset and extract
-    EXACTLY the 12 features expected by the model.
+    Take a row from the restaurant dataset and extract
+    the 5 features expected by the model.
 
-    This ensures predictor.py ALWAYS receives correct values.
+    Features: borough, zipcode, cuisine_description, critical_flag_bin, score
     """
 
     required_fields = [
@@ -50,20 +50,13 @@ def row_to_model_input(row: pd.Series):
         "cuisine_description",
         "critical_flag_bin",
         "score",
-        "nyc_poverty_rate",
-        "median_income",
-        "perc_white",
-        "perc_black",
-        "perc_asian",
-        "perc_hispanic",
-        "indexscore"
     ]
 
     data = {}
 
     for field in required_fields:
         if field not in row:
-            raise KeyError(f"Missing required field: {field}")
+            raise KeyError(f"Missing required field: {field}. Available: {list(row.index)}")
         data[field] = row[field]
 
     return data
@@ -77,7 +70,7 @@ def clean_zip(zip_value):
     """Ensure ZIP codes become integers or None."""
     try:
         return int(zip_value)
-    except:
+    except (ValueError, TypeError):
         return None
 
 
@@ -86,6 +79,13 @@ def normalize_text(text):
     if pd.isna(text):
         return ""
     return str(text).strip().title()
+
+
+def display_value(value, fallback="Unavailable"):
+    """Return fallback string if value is NaN, None, or empty."""
+    if pd.isna(value) or value == "" or value is None:
+        return fallback
+    return value
 
 
 # -------------------------------------------------
@@ -101,8 +101,8 @@ def restaurant_popup_html(row):
     cuisine = row.get("cuisine_description", "Unknown")
     borough = row.get("borough", "Unknown")
     zipcode = row.get("zipcode", "")
-    score = row.get("score", "")
-    grade = row.get("grade", "N/A")
+    score = display_value(row.get("score"), "N/A")
+    grade = display_value(row.get("grade"), "N/A")
 
     color = get_grade_color(grade)
 

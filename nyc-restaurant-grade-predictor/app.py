@@ -12,6 +12,7 @@ from src.utils import (
     row_to_model_input,
     restaurant_popup_html,
     normalize_text,
+    display_value,
 )
 
 
@@ -38,14 +39,15 @@ st.markdown(
 def load_app_data():
     df = get_data()
 
-    # Basic assumptions about columns
-    # Adjust if your col names differ
-    if "latitude" in df.columns and "longitude" in df.columns:
-        df = df.dropna(subset=["latitude", "longitude"])
-
     # Normalize some text fields for filters
     df["borough"] = df["borough"].astype(str).str.strip().str.title()
     df["cuisine_description"] = df["cuisine_description"].astype(str).str.strip().str.title()
+
+    # Keep only the most recent inspection per restaurant (by camis ID)
+    if "camis" in df.columns and "inspection_date" in df.columns:
+        df["inspection_date"] = pd.to_datetime(df["inspection_date"], errors="coerce")
+        df = df.sort_values("inspection_date", ascending=False)
+        df = df.drop_duplicates(subset=["camis"], keep="first")
 
     return df
 
@@ -72,7 +74,7 @@ if borough_choice != "All":
 else:
     zip_candidates = df["zipcode"].unique()
 
-zips = ["All"] + sorted([int(z) for z in zip_candidates if pd.notna(z)])
+zips = ["All"] + sorted([z for z in zip_candidates if pd.notna(z)])
 zip_choice = st.sidebar.selectbox("ZIP code", zips, index=0)
 
 # Cuisine filter
@@ -115,8 +117,15 @@ with left_col:
 
         m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
 
+        # Limit markers to prevent browser freeze (show first 1000)
+        MAX_MARKERS = 1000
+        df_for_map = df_filtered.head(MAX_MARKERS)
+
+        if len(df_filtered) > MAX_MARKERS:
+            st.caption(f"Showing {MAX_MARKERS:,} of {len(df_filtered):,} restaurants on map. Use filters to narrow results.")
+
         # Add markers
-        for _, row in df_filtered.iterrows():
+        for _, row in df_for_map.iterrows():
             lat = row["latitude"]
             lon = row["longitude"]
             grade = row.get("grade", "N/A")
@@ -190,8 +199,8 @@ with right_col:
 
         # Show existing inspection info (if present)
         st.markdown("###  Latest Inspection Info")
-        st.markdown(f"- **Score:** {selected_row.get('score', 'N/A')}")
-        st.markdown(f"- **Official Grade:** {selected_row.get('grade', 'N/A')}")
+        st.markdown(f"- **Score:** {display_value(selected_row.get('score'), 'N/A')}")
+        st.markdown(f"- **Official Grade:** {display_value(selected_row.get('grade'), 'Unavailable')}")
         if "inspection_date" in selected_row:
             st.markdown(f"- **Inspection Date:** {selected_row.get('inspection_date')}")
 
@@ -223,18 +232,3 @@ with right_col:
 
             except Exception as e:
                 st.error(f"Error making prediction: {e}")
-
-        st.markdown("---")
-        st.markdown("###  Neighborhood Snapshot (from NFH data)")
-        nf_cols = [
-            "nyc_poverty_rate",
-            "median_income",
-            "perc_white",
-            "perc_black",
-            "perc_asian",
-            "perc_hispanic",
-            "indexscore"
-        ]
-        for col in nf_cols:
-            if col in selected_row:
-                st.write(f"**{col}:** {selected_row[col]}")

@@ -9,35 +9,22 @@ import os
 # -------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-# ✔️ Updated the filename here
 MODEL_PATH = os.path.join(BASE_DIR, "models", "restaurant_grade_model.pkl")
-
 META_PATH = os.path.join(BASE_DIR, "models", "model_metadata.json")
 
-
-print("Loading model from:", MODEL_PATH)
 try:
     model = joblib.load(MODEL_PATH)
-    print("Model loaded successfully!")
 except Exception as e:
-    print("MODEL LOAD ERROR:", e)
-    raise RuntimeError(f"❌ Could not load model: {e}")
-
-# try:
-#     model = joblib.load(MODEL_PATH)
-# except Exception as e:
-#     raise RuntimeError(f"❌ Could not load model: {e}")
+    raise RuntimeError(f"Could not load model: {e}")
 
 try:
     with open(META_PATH, "r") as f:
         metadata = json.load(f)
 except Exception as e:
-    raise RuntimeError(f"❌ Could not load metadata JSON: {e}")
+    raise RuntimeError(f"Could not load metadata JSON: {e}")
 
-FEATURE_COLUMNS = metadata["feature_columns"]   # exact order used in training
+FEATURE_COLUMNS = metadata["feature_columns"]
 ENCODERS = metadata.get("encoders", {})
-SCALER_NEEDED = metadata.get("scaler_needed", False)
 
 
 # -------------------------------------------------
@@ -46,33 +33,49 @@ SCALER_NEEDED = metadata.get("scaler_needed", False)
 
 def build_feature_vector(restaurant_data: dict):
     """
-    restaurant_data is a dict containing the fields your app sends, e.g.:
+    Transform restaurant data dict into model-ready feature array.
 
+    Expected input:
     {
-        "zipcode": 11372,
         "borough": "Queens",
+        "zipcode": "11372",
         "cuisine_description": "Latin American",
         "critical_flag_bin": 0,
         "score": 12
     }
 
-    This function transforms it into a DataFrame with the SAME columns
-    and order that the model was trained on.
+    Returns numpy array with encoded features.
     """
-    df_input = pd.DataFrame([restaurant_data])
+    # Encode borough
+    borough_val = str(restaurant_data.get("borough", "")).strip().title()
+    borough_encoder = ENCODERS.get("borough", {})
+    borough_encoded = borough_encoder.get(borough_val, 0)
 
-    if ENCODERS:
-        for col, mapping in ENCODERS.items():
-            if col in df_input:
-                val = df_input[col].iloc[0]
-                df_input[col] = mapping.get(val, mapping.get("__OTHER__", 0))
+    # Encode zipcode as numeric
+    zipcode_val = restaurant_data.get("zipcode", 0)
+    try:
+        zipcode_numeric = float(str(zipcode_val).replace(",", ""))
+    except (ValueError, TypeError):
+        zipcode_numeric = 0
 
-    # Rebuild DataFrame with correct column order
-    df_final = pd.DataFrame(columns=FEATURE_COLUMNS)
-    for col in FEATURE_COLUMNS:
-        df_final[col] = df_input[col] if col in df_input else 0
+    # Encode cuisine
+    cuisine_val = str(restaurant_data.get("cuisine_description", "")).strip().title()
+    cuisine_encoder = ENCODERS.get("cuisine_description", {})
+    cuisine_encoded = cuisine_encoder.get(cuisine_val, 0)
 
-    return df_final
+    # Critical flag (already binary)
+    critical_flag = int(restaurant_data.get("critical_flag_bin", 0))
+
+    # Score (numeric)
+    score_val = restaurant_data.get("score", 0)
+    try:
+        score = float(score_val) if score_val is not None else 0
+    except (ValueError, TypeError):
+        score = 0
+
+    # Return as 2D array for sklearn
+    features = np.array([[borough_encoded, zipcode_numeric, cuisine_encoded, critical_flag, score]])
+    return features
 
 
 # -------------------------------------------------
