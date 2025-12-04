@@ -23,10 +23,96 @@ st.set_page_config(
     layout="wide"
 )
 
+# -------------------------------------------------
+# Custom CSS for clean light theme
+# -------------------------------------------------
+st.markdown("""
+<style>
+    /* Typography */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Headings */
+    h1, h2, h3 {
+        font-weight: 600 !important;
+    }
+
+    /* Button styling */
+    .stButton > button {
+        background: #E87C4F;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .stButton > button:hover {
+        background: #D4703F;
+    }
+
+    /* Form elements */
+    .stSelectbox > div > div {
+        border-radius: 6px;
+    }
+
+    /* DataFrame */
+    .stDataFrame {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    /* Grade badge */
+    .grade-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        font-size: 32px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .grade-A { background: #7DB87D; }
+    .grade-B { background: #E8C84A; }
+    .grade-C { background: #8B3A3A; }
+    .grade-P { background: #9BA8C4; }
+    .grade-Z { background: #D4956A; }
+
+    /* Card container */
+    .info-card {
+        background: #F8F9FA;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #E9ECEF;
+        margin-bottom: 1rem;
+    }
+
+    /* Results counter */
+    .results-counter {
+        background: #F8F9FA;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-top: 1rem;
+        border-left: 3px solid #E87C4F;
+    }
+
+    .results-counter p {
+        margin: 0;
+        font-weight: 500;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("CleanKitchen NYC")
 st.markdown(
-    "Explore NYC restaurant inspections, neighborhood demographics, "
-    "and **AI-powered grade predictions** based on real inspection data."
+    "Explore NYC restaurant inspections and get **AI-powered grade predictions** "
+    "based on real inspection data."
 )
 
 
@@ -95,7 +181,11 @@ if zip_choice != "All":
 if cuisine_choice:
     df_filtered = df_filtered[df_filtered["cuisine_description"].isin(cuisine_choice)]
 
-st.sidebar.markdown(f"**Results: {len(df_filtered)} restaurants**")
+st.sidebar.markdown(f"""
+<div class="results-counter">
+    <p>{len(df_filtered):,} restaurants found</p>
+</div>
+""", unsafe_allow_html=True)
 
 
 # -------------------------------------------------
@@ -143,23 +233,28 @@ with left_col:
 
         tooltip = {
             "html": "<b>{name}</b><br/>Cuisine: {cuisine_description}<br/>Borough: {borough}<br/>ZIP: {zipcode}<br/>Score: {score_display}<br/>Grade: <b>{grade_display}</b>",
-            "style": {"backgroundColor": "steelblue", "color": "white", "fontSize": "14px", "padding": "10px"}
+            "style": {"backgroundColor": "#FFFFFF", "color": "#2C3E50", "fontSize": "14px", "padding": "12px", "borderRadius": "6px", "boxShadow": "0 2px 8px rgba(0,0,0,0.15)"}
         }
 
         st.pydeck_chart(
-            pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip=tooltip),
+            pdk.Deck(
+                layers=[layer],
+                initial_view_state=view_state,
+                tooltip=tooltip,
+                map_style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+            ),
             height=500,
             use_container_width=True,
         )
 
         # Grade legend
         st.markdown("""
-        <div style="display: flex; gap: 15px; font-size: 12px; margin-top: 5px;">
-            <span><span style="color: #2ECC71;">●</span> A</span>
-            <span><span style="color: #F1C40F;">●</span> B</span>
-            <span><span style="color: #E67E22;">●</span> C</span>
-            <span><span style="color: #3498DB;">●</span> Pending</span>
-            <span><span style="color: #95A5A6;">●</span> N/A</span>
+        <div style="display: flex; gap: 20px; font-size: 16px; margin-top: 10px; flex-wrap: wrap;">
+            <span><span style="color: #7DB87D; font-size: 20px;">●</span> A</span>
+            <span><span style="color: #E8C84A; font-size: 20px;">●</span> B</span>
+            <span><span style="color: #8B3A3A; font-size: 20px;">●</span> C</span>
+            <span><span style="color: #9BA8C4; font-size: 20px;">●</span> Pending</span>
+            <span><span style="color: #D4956A; font-size: 20px;">●</span> N/A</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -229,28 +324,45 @@ with right_col:
         st.markdown("---")
         st.markdown("###  Model Prediction")
 
-        if st.button("Predict Inspection Grade"):
-            try:
-                # Build model input
-                model_input = row_to_model_input(selected_row)
-                result = predict_restaurant_grade(model_input)
+        if st.button("Predict Inspection Grade", use_container_width=True):
+            with st.spinner("Analyzing restaurant data..."):
+                try:
+                    # Build model input
+                    model_input = row_to_model_input(selected_row)
+                    result = predict_restaurant_grade(model_input)
 
-                predicted_grade = result["grade"]
-                probabilities = result["probabilities"]
-                formatted_probs = format_probabilities(probabilities)
+                    predicted_grade = result["grade"]
+                    probabilities = result["probabilities"]
+                    formatted_probs = format_probabilities(probabilities)
 
-                color = get_grade_color(predicted_grade)
+                    color = get_grade_color(predicted_grade)
 
-                st.markdown(
-                    f"**Predicted Grade:** "
-                    f"<span style='color:{color}; font-size: 24px; font-weight: bold;'>{predicted_grade}</span>",
-                    unsafe_allow_html=True
-                )
+                    # Prediction result card
+                    st.markdown(f"""
+                    <div class="info-card" style="text-align: center;">
+                        <p style="font-size: 0.85rem; margin-bottom: 0.5rem; color: #6C757D;">
+                            PREDICTED GRADE
+                        </p>
+                        <div class="grade-badge grade-{predicted_grade}" style="margin: 0 auto;">
+                            {predicted_grade}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                st.markdown("#### Confidence by Grade")
-                for g, p in formatted_probs:
-                    bar = "█" * int(p // 4)  # simple text bar
-                    st.write(f"{g}: {p:.1f}% {bar}")
+                    st.markdown("#### Confidence by Grade")
+                    for g, p in formatted_probs:
+                        grade_color = get_grade_color(g)
+                        st.markdown(f"""
+                        <div style="margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>Grade {g}</span>
+                                <span style="font-weight: 500;">{p:.1f}%</span>
+                            </div>
+                            <div style="background: #E9ECEF; border-radius: 4px; height: 6px; overflow: hidden;">
+                                <div style="background: {grade_color}; width: {p}%; height: 100%; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-            except Exception as e:
-                st.error(f"Error making prediction: {e}")
+                except Exception as e:
+                    st.error(f"Error making prediction: {e}")

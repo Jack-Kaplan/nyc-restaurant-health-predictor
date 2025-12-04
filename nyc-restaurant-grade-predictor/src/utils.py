@@ -5,31 +5,31 @@ import pandas as pd
 # -------------------------------------------------
 
 GRADE_COLORS = {
-    "A": "#2ECC71",   # green
-    "B": "#F1C40F",   # yellow
-    "C": "#E67E22",   # orange
-    "P": "#3498DB",   # blue (Pending)
-    "Z": "#95A5A6"    # gray (Grade Pending / Not Yet Graded)
+    "A": "#7DB87D",   # green
+    "B": "#E8C84A",   # yellow
+    "C": "#8B3A3A",   # red
+    "P": "#9BA8C4",   # blue (Pending)
+    "Z": "#D4956A",   # orange (Grade Pending / Not Yet Graded)
 }
 
 GRADE_COLORS_RGB = {
-    "A": [46, 204, 113, 200],    # green with alpha
-    "B": [241, 196, 15, 200],    # yellow
-    "C": [230, 126, 34, 200],    # orange
-    "P": [52, 152, 219, 200],    # blue (Pending)
-    "Z": [149, 165, 166, 200],   # gray
+    "A": [125, 184, 125, 200],   # green with alpha
+    "B": [232, 200, 74, 200],    # yellow
+    "C": [139, 58, 58, 200],     # red
+    "P": [155, 168, 196, 200],   # blue (Pending)
+    "Z": [212, 149, 106, 200],   # orange
 }
 
 def get_grade_color(grade: str):
     """Return the hex color associated with a grade letter."""
-    return GRADE_COLORS.get(grade, "#95A5A6")
+    return GRADE_COLORS.get(grade, "#D4956A")
 
 
 def get_grade_color_rgb(grade: str):
     """Return RGBA list for PyDeck visualization."""
     if pd.isna(grade):
-        return [149, 165, 166, 200]
-    return GRADE_COLORS_RGB.get(str(grade).upper(), [149, 165, 166, 200])
+        return [212, 149, 106, 200]
+    return GRADE_COLORS_RGB.get(str(grade).upper(), [212, 149, 106, 200])
 
 
 # -------------------------------------------------
